@@ -1,0 +1,58 @@
+#!/usr/local/bin/python3
+# -*- coding: utf-8 -*-
+
+from Enigma import EnigmaMachine
+from Cipher import CipherTabelle
+import argparse
+import sys
+from datetime import date, timedelta, datetime
+
+parser = argparse.ArgumentParser(description='Run the enigma core program.')
+parser.add_argument('--text', type=str, nargs='*', help='text to be en-/decrypted')
+parser.add_argument('--seed', type=int, default=0, help='Input encryption seed as integer')
+parser.add_argument('--date', type=str, default='', help='Input encryption key as date YYYY-MM-DD')
+parser.add_argument('--key', action='store_true', help='Show key used')
+args = parser.parse_args()
+
+# Use days since Hitler's invasion of Poland as default random seed
+anfang = date(1939, 9, 1)
+
+if args.seed:
+    # Seed given by --seed option
+    samen = args.seed
+    cipher_tag = anfang + timedelta(samen)
+elif args.date:
+    # Seed given by --date option
+    cipher_tag = datetime.strptime(args.date, '%Y-%m-%d').date()
+    zeit_diff = cipher_tag - anfang
+    samen = zeit_diff.days
+else:
+    # Seed given by today's date
+    cipher_tag = date.today()
+    zeit_diff = cipher_tag - anfang
+    samen = zeit_diff.days
+
+#sys_stdin_rd = sys.stdin.read()
+argument = ''.join(args.text)
+#print(sys_stdin_rd)
+print(argument)
+
+# Select a cipher
+cipher = CipherTabelle(anzahl_walze=3, samen=samen)
+
+# Rotors are numbered 0, 1, 2 (3) from left (reflektor) to right (input/output)
+enigma = EnigmaMachine(cipher)
+"""
+if sys_stdin_rd:
+    eingabe = sys_stdin_rd
+"""
+if argument:
+    eingabe = argument
+else:
+    eingabe = input('Botshaft: ')
+
+enigma.eingabe(eingabe)
+enigma.ausfuhren()
+enigma.ausgabe(enigma.geheim_text)
+if args.key:
+    print('[{} {}]'.format(samen, cipher_tag))
